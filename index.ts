@@ -45,6 +45,7 @@ async function submitUrl(
       headers: {
         Authorization: `LOW ${accessKey}:${secretKey}`,
         "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
       },
       body: new URLSearchParams({ url }),
     });
@@ -169,9 +170,10 @@ program
         results.push(result);
       }
 
-      // Rate limiting between batches
+      // Rate limiting between batches — SPN2 limits active sessions
       if (i + concurrency < urls.length) {
-        await Bun.sleep(1000);
+        const hasError = batchResults.some((r) => r.status === "error");
+        await Bun.sleep(hasError ? 60_000 : 5_000);
       }
     }
 
